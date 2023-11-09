@@ -38,7 +38,16 @@ async function run() {
 
     // all crud operations is starting form here.
 
-const dataBase=client.db("Gable_career_hub").collection("All_job_post")
+
+    const dataBase=client.db("Gable_career_hub").collection("All_job_post")
+
+    // get all jobs.
+app.get("/Get_All_Jobs",async(req,res)=>{
+  const result=await dataBase.find()
+  const data=await result.toArray()
+  res.send(data)
+})
+
 app.post("/post_a_job",async(req,res)=>{
   const data=req.body
   const result=await dataBase.insertOne(data)
@@ -62,9 +71,45 @@ app.delete("/Delete_my_jobs",async(req,res)=>{
   res.send(result)
 
 })
+// delet a job item.
+
+app.patch("/Update_my_jobs" ,async(req,res)=>{
+  const data=req.body
+  const {url,company,title,userName,catagory,salaryRange,jobDetails,jobPost,applicant,Deadline}=data
+  const id=new ObjectId(data.id)
+  const query={_id:id}
+  const newValue={
+    $set:{
+      url:url,title:title,userName:userName,catagory:catagory,salaryRange:salaryRange,jobDetails:jobDetails,jobPost:jobPost,applicant:applicant,Deadline:Deadline,company:company
+
+    }
+  }
+  const result=await dataBase.updateOne(query,newValue)
+  res.send(result)
+
+})
+
+// get item by id.
+app.get("/updateOne/:id",async(req,res)=>{
+  const id=req.params.id
+  const newId=new ObjectId(id)
+  const query={_id:newId}
+  const result= await dataBase.findOne(query)
+  res.send(result)
   
+})
+    
+// add to applyed job.
 
+app.post("/add_to_job",async(req,res)=>{
+  const data=req.body
+  const email=data.email
+  const jobDatabase=client.db("Gable_career_hub").collection(email)
+  const result=await jobDatabase.insertOne(data)
+  res.send(result)
+})
 
+ 
 
 
     // end.
@@ -78,14 +123,13 @@ run().catch(console.dir);
 
 app.listen(port,()=>{
     console.log({runningOn:`http://localhost:${port}`})
+  
 })
 
 
-
-
+ 
 // Lj70ouuDVUj726Am
 // Gable
-
 
 
 
