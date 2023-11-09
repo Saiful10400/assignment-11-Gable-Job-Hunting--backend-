@@ -109,8 +109,14 @@ app.post("/add_to_job",async(req,res)=>{
   res.send(result)
 })
 
- 
-
+// get applyed job.
+app.get("/get_to_job",async(req,res)=>{
+  const email=req.query.email
+  const jobDatabase=client.db("Gable_career_hub").collection(email)
+  const result=await jobDatabase.find()
+  res.send(await result.toArray())
+})
+  
 
     // end.
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
