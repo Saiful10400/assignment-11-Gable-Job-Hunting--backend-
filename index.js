@@ -108,7 +108,7 @@ app.post("/add_to_job",async(req,res)=>{
   const result=await jobDatabase.insertOne(data)
   res.send(result)
 })
-
+ 
 // get applyed job.
 app.get("/get_to_job",async(req,res)=>{
   const email=req.query.email
@@ -116,6 +116,22 @@ app.get("/get_to_job",async(req,res)=>{
   const result=await jobDatabase.find()
   res.send(await result.toArray())
 })
+
+
+
+// updae a field after apply.
+
+
+app.patch("/update_field",async(req,res)=>{
+  const id=req.query.id
+  const query={_id:new ObjectId(id)}
+  const result= await dataBase.updateOne(query,{$inc:{applicant:1}})
+  res.send(result)
+})
+
+
+
+
   
 
     // end.
