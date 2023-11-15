@@ -2,6 +2,7 @@ const cookieParser = require("cookie-parser");
 const  express  = require("express");
 const cors=require("cors")
 const app=express()
+const jwt=require("jsonwebtoken")
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require("dotenv").config()
 
@@ -9,12 +10,15 @@ require("dotenv").config()
 const port=process.env.port || 5000
 
 // all middle wares.
-app.use(cors())
+app.use(cors({
+  origin:["http://localhost:5174","http://localhost:5173","https://gable-job-portal.web.app"],
+  credentials:true
+}))
 app.use(express.json())
 app.use(cookieParser())
 
 
-
+ 
 
 
 
@@ -31,11 +35,42 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-
+// test on home route.
     app.get("/",(req,res)=>{
         res.send(`server is runnning on port:${port}`)
     })
 
+    // jwt token generator.
+
+
+    app.post("/jwt_token",async(req,res)=>{
+      const email=req.query.email
+      
+      const token=jwt.sign({email},process.env.JWT_TOKEN,{expiresIn:"1h"})
+      res.cookie("token",token,{httpOnly:true,secure:false})
+      
+      res.send({success:true})
+     
+    })
+
+// jwt token verification.
+
+const verify=(req,res,next)=>{
+  const token=req.cookies.token
+  if(!token){
+    res.send([])
+    return
+  }
+else if(token){
+  jwt.verify(token,process.env.JWT_TOKEN,(err,decode)=>{
+    req.tokenEmail=decode.email
+    next()
+  })
+}
+ 
+
+}
+  
     // all crud operations is starting form here.
 
 
@@ -55,11 +90,14 @@ app.post("/post_a_job",async(req,res)=>{
 })
 
 // get all data for my jobs page.
-app.get("/Get_my_jobs",async(req,res)=>{
+app.get("/Get_my_jobs",verify,async(req,res)=>{
   const email=req.query.email
-  const query={adminEmail:email}
+  const verifyEmail=req.tokenEmail
+  if(email===verifyEmail){
+    const query={adminEmail:email}
   const result=await dataBase.find(query)
   res.send(await result.toArray())
+  }
 })
 // delete a job form my jobs.
 
@@ -110,11 +148,18 @@ app.post("/add_to_job",async(req,res)=>{
 })
  
 // get applyed job.
-app.get("/get_to_job",async(req,res)=>{
+app.get("/get_to_job",verify,async(req,res)=>{
   const email=req.query.email
-  const jobDatabase=client.db("Gable_career_hub").collection(email)
-  const result=await jobDatabase.find()
-  res.send(await result.toArray())
+  const TokenEmail=req.tokenEmail
+  if(email===TokenEmail){
+
+    const jobDatabase=client.db("Gable_career_hub").collection(email)
+    const result=await jobDatabase.find()
+    res.send(await result.toArray())
+  }
+
+
+  
 })
 
 
